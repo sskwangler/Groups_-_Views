@@ -16,20 +16,14 @@ $(function() {
 function getGroups(groups, payload) {
     // example of a promise being used, notice the recursion
     // and chain of return functions
-    return client.request(payload).then((response) => {
-        console.log('Response: ', response)
-        console.log(`groups [${response['groups'].length}]:  ${response['groups']}`);
-        groups = groups.concat(response['groups']);
-        if (response['next_page']) {
-            // if has_more is true, pagination continues
-            payload['url'] = response['next_page'];
-            return getGroups(groups, payload);
-            // recursive call
-        } else {
-            console.log('groups after getGroups(): ', groups)
-            groups.push({'name': 'personal', 'id': 'personal', 'views': []});
-            buildGroupsTable(groups);
+    return client.get('currentUser.groups').then((response) => {
+        console.log('response: ', response);
+        for (let r of response['currentUser.groups']) {
+            groups.push({'name': r['name'], 'id': r['id'], 'views': []});
         }
+        console.log('groups after getGroups(): ', groups)
+        groups.unshift({'name': 'Personal Views', 'id': 'personal', 'views': []});
+        return buildGroupsTable(groups);
     })
 }
 
@@ -70,7 +64,7 @@ function loadGroupViews(group) {
     if (group['id'] == 'personal') {
         // if the custom 'personal' views group is clicked
         // simply pass in the views, else dynamically lookup views
-        console.log('Look here!');
+        console.log('Personally!');
         let payload = {
             url: '/api/v2/views/active.json',
             type: 'GET'
@@ -85,7 +79,7 @@ function loadGroupViews(group) {
     } else {
         // setup payload for recursive call
         // update the url after each iter
-        console.log('No, look here!');
+        console.log('Nothing personal!');
         let payload = {
             url: '/api/v2/views/search.json',
             type: 'GET',
